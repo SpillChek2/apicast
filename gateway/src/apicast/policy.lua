@@ -19,7 +19,7 @@ local PHASES = {
 local setmetatable = setmetatable
 local ipairs = ipairs
 local format = string.format
-
+local empty = table.new(0,0 )
 local noop = function() end
 
 local function __tostring(policy)
@@ -28,6 +28,29 @@ end
 
 local function __eq(policy, other)
     return policy._NAME == other._NAME and policy._VERSION == other._VERSION
+end
+
+local inspect = require('inspect')
+
+local function __gc(proxy)
+    local policy = getmetatable(proxy).__index -- proxy always points to the policy
+    local mt = getmetatable(policy) or empty-- in case someone changed the policy metatable
+
+    local gc = mt.__gc or noop
+
+    return gc(policy)
+end
+
+local function metatable(policy)
+    local proxy = newproxy(true)
+    local mt = getmetatable(proxy)
+
+    mt.__index = policy
+    mt.__tostring = __tostring
+    mt.__gc = __gc
+policy.proxy = proxy
+
+    return mt
 end
 
 --- Initialize new policy
@@ -40,7 +63,8 @@ function _M.new(name, version)
         _NAME = name,
         _VERSION = version or '0.0',
     }
-    local mt = { __index = policy, __tostring = __tostring, policy = policy }
+
+    local mt = metatable(policy)
 
     function policy.new()
         return setmetatable({}, mt)

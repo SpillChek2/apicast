@@ -219,6 +219,8 @@ function lazy.rewrite(configuration, host)
     ngx.log(ngx.WARN, 'failed to acquire lock to lazy load: ', host, ' error: ', err)
   end
 
+  collectgarbage()
+
   return configuration
 end
 

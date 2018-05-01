@@ -10,6 +10,11 @@ local new = _M.new
 
 function _M.new(configuration)
   local policy = new(configuration)
+  local mt = getmetatable(policy)
+
+  function mt.__gc(policy)
+    ngx.log(ngx.STDERR, 'running __gc of echo policy')
+  end
 
   if configuration then
     policy.status = tonumber(configuration.status)
